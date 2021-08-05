@@ -155,6 +155,8 @@
 	"gui.mtr.untitled": "Untitled",
 	"gui.mtr.zone": "Fare Zone",
 	"gui.mtr.zone_number": "Zone %s",
+	"gui.mtr.sucess_remove": "Successfully removed rail",
+	"gui.mtr.sucess_connect": "Successfully placing rail",
 	"item.mtr.apg_door": "Automatic Platform Gates",
 	"item.mtr.apg_glass": "Automatic Platform Gates",
 	"item.mtr.apg_glass_end": "Automatic Platform Gates",
