@@ -238,7 +238,8 @@ public class RenderTrains implements IGui {
 		})));
 
 		matrices.translate(-cameraPos.x, 0.0625 + SMALL_OFFSET - cameraPos.y, -cameraPos.z);
-		final boolean renderColors = player.isHolding(item -> item instanceof ItemRailModifier);
+		final boolean isDebug = client.options.debugEnabled;
+		final boolean renderColors = player.isHolding(item -> item instanceof ItemRailModifier) || isDebug;
 		final int maxRailDistance = renderDistanceChunks * 16;
 		ClientData.rails.forEach((startPos, railMap) -> railMap.forEach((endPos, rail) -> {
 			if (!RailwayData.isBetween(player.getX(), startPos.getX(), endPos.getX(), maxRailDistance) || !RailwayData.isBetween(player.getZ(), startPos.getZ(), endPos.getZ(), maxRailDistance)) {

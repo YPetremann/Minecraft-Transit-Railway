@@ -19,6 +19,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
@@ -47,59 +48,75 @@ public class ItemRailModifier extends Item {
 		this.railType = railType;
 	}
 
+	public Pair<ActionResult, Text> placeAction(World world, BlockPos posStart, BlockPos posEnd) {
+		final RailwayData railwayData = RailwayData.getInstance(world);
+		final BlockState stateStart = world.getBlockState(posStart);
+		final BlockState stateEnd = world.getBlockState(posEnd);
+		if (railwayData != null && stateStart.getBlock() instanceof BlockRail && stateEnd.getBlock() instanceof BlockRail) {
+			if (isConnector) {
+				final boolean isEastWest1 = IBlock.getStatePropertySafe(world, posStart, BlockRail.FACING);
+				final boolean isEastWest2 = IBlock.getStatePropertySafe(world, posEnd, BlockRail.FACING);
+				final Direction facingStart = getDirectionFromPos(posStart, isEastWest1, posEnd);
+				final Direction facingEnd = getDirectionFromPos(posEnd, isEastWest2, posStart);
+
+				if (isValidStart(posStart, facingStart, posEnd) && isValidStart(posEnd, facingEnd, posStart)) {
+
+					if (railType.hasSavedRail && (railwayData.hasSavedRail(posStart) || railwayData.hasSavedRail(posEnd))) {
+						return new Pair<>(ActionResult.FAIL, new TranslatableText("gui.mtr.platform_or_siding_exists"));
+					} else {
+						final Rail rail1 = new Rail(posStart, facingStart, posEnd, facingEnd, isOneWay ? RailType.NONE : railType);
+						final Rail rail2 = new Rail(posEnd, facingEnd, posStart, facingStart, railType);
+						railwayData.addRail(posStart, posEnd, rail1, false);
+						final long newId = railwayData.addRail(posEnd, posStart, rail2, true);
+						world.setBlockState(posStart, stateStart.with(BlockRail.IS_CONNECTED, true));
+						world.setBlockState(posEnd, stateEnd.with(BlockRail.IS_CONNECTED, true));
+						PacketTrainDataGuiServer.createRailS2C(world, posStart, posEnd, rail1, rail2, newId);
+					}
+				} else {
+					return new Pair<>(ActionResult.FAIL, new TranslatableText("gui.mtr.invalid_orientation"));
+				}
+			} else {
+				railwayData.removeRailConnection(posStart, posEnd);
+				PacketTrainDataGuiServer.removeRailConnectionS2C(world, posStart, posEnd);
+			}
+		} else {
+			return new Pair<>(ActionResult.FAIL, Text.of(""));
+		}
+		return new Pair<>(ActionResult.SUCCESS, new TranslatableText("gui.mtr.sucess_remove"));
+	}
+
 	@Override
 	public ActionResult useOnBlock(ItemUsageContext context) {
 		final World world = context.getWorld();
 		if (!world.isClient) {
-			final RailwayData railwayData = RailwayData.getInstance(world);
-			final BlockPos posStart = context.getBlockPos();
-			final BlockState stateStart = world.getBlockState(posStart);
-
-			if (railwayData != null && stateStart.getBlock() instanceof BlockRail) {
+			
+			final PlayerEntity player = context.getPlayer();
+			if (player.isSneaking()) {
+				// clear rail item when sneaking
 				final NbtCompound nbtCompound = context.getStack().getOrCreateTag();
+				nbtCompound.remove(TAG_POS);
+				return ActionResult.SUCCESS;
+			}
+			
+			final BlockPos posStart = context.getBlockPos();
 
-				if (nbtCompound.contains(TAG_POS)) {
-					final BlockPos posEnd = BlockPos.fromLong(nbtCompound.getLong(TAG_POS));
-					final BlockState stateEnd = world.getBlockState(posEnd);
+			final NbtCompound nbtCompound = context.getStack().getOrCreateTag();
 
-					if (stateEnd.getBlock() instanceof BlockRail) {
-						final PlayerEntity player = context.getPlayer();
-						if (isConnector) {
-							final boolean isEastWest1 = IBlock.getStatePropertySafe(world, posStart, BlockRail.FACING);
-							final boolean isEastWest2 = IBlock.getStatePropertySafe(world, posEnd, BlockRail.FACING);
-							final Direction facingStart = getDirectionFromPos(posStart, isEastWest1, posEnd);
-							final Direction facingEnd = getDirectionFromPos(posEnd, isEastWest2, posStart);
+			if (nbtCompound.contains(TAG_POS)) {
+				final BlockPos posEnd = BlockPos.fromLong(nbtCompound.getLong(TAG_POS));
 
-							if (isValidStart(posStart, facingStart, posEnd) && isValidStart(posEnd, facingEnd, posStart)) {
-								if (railType.hasSavedRail && (railwayData.hasSavedRail(posStart) || railwayData.hasSavedRail(posEnd))) {
-									if (player != null) {
-										player.sendMessage(new TranslatableText("gui.mtr.platform_or_siding_exists"), true);
-									}
-								} else {
-									final Rail rail1 = new Rail(posStart, facingStart, posEnd, facingEnd, isOneWay ? RailType.NONE : railType);
-									final Rail rail2 = new Rail(posEnd, facingEnd, posStart, facingStart, railType);
-									railwayData.addRail(posStart, posEnd, rail1, false);
-									final long newId = railwayData.addRail(posEnd, posStart, rail2, true);
-									world.setBlockState(posStart, stateStart.with(BlockRail.IS_CONNECTED, true));
-									world.setBlockState(posEnd, stateEnd.with(BlockRail.IS_CONNECTED, true));
-									PacketTrainDataGuiServer.createRailS2C(world, posStart, posEnd, rail1, rail2, newId);
-								}
-							} else {
-								if (player != null) {
-									player.sendMessage(new TranslatableText("gui.mtr.invalid_orientation"), true);
-								}
-							}
-						} else {
-							railwayData.removeRailConnection(posStart, posEnd);
-							PacketTrainDataGuiServer.removeRailConnectionS2C(world, posStart, posEnd);
-						}
+				final Pair<ActionResult, Text> result = placeAction(world, posStart, posEnd);
+
+				final Text message = result.getRight();
+				if (player != null) {
+					if (message.toString().length() > 0) {
+						player.sendMessage(message, true);
 					}
-
-					nbtCompound.remove(TAG_POS);
-				} else {
-					nbtCompound.putLong(TAG_POS, posStart.asLong());
 				}
-
+				nbtCompound.remove(TAG_POS);
+				return result.getLeft();
+			} else if(world.getBlockState(posStart).getBlock() instanceof BlockRail) {
+				nbtCompound.putLong(TAG_POS, posStart.asLong());
 				return ActionResult.SUCCESS;
 			} else {
 				return ActionResult.FAIL;

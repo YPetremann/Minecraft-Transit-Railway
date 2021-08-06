@@ -91,9 +91,9 @@ public class Rail extends SerializedDataBase {
 
 							r2 = xEnd;
 							h2 = 0;
-							k2 = 1;
-							tStart2 = k1;
-							tEnd2 = zEnd;
+							k2 = -1;
+							tStart2 = -k1;
+							tEnd2 = -zEnd;
 							reverseT2 = tEnd2 < tStart2;
 							isStraight2 = true;
 						}
@@ -115,9 +115,9 @@ public class Rail extends SerializedDataBase {
 
 							r1 = xStart;
 							h1 = 0;
-							k1 = 1;
-							tStart1 = zStart;
-							tEnd1 = k2;
+							k1 = -1;
+							tStart1 = -zStart;
+							tEnd1 = -k2;
 							reverseT1 = tEnd1 < tStart1;
 							isStraight1 = true;
 						} else {
@@ -181,10 +181,10 @@ public class Rail extends SerializedDataBase {
 		} else {
 			if (xStart == xEnd) {
 				h1 = h2 = k2 = r2 = 0;
-				k1 = 1;
+				k1 = -1;
 				r1 = xStart;
-				tStart1 = zStart;
-				tEnd1 = tStart2 = tEnd2 = zEnd;
+				tStart1 = -zStart;
+				tEnd1 = tStart2 = tEnd2 = -zEnd;
 			} else {
 				h2 = k1 = k2 = r2 = 0;
 				h1 = 1;
@@ -331,7 +331,7 @@ public class Rail extends SerializedDataBase {
 
 	private static Pos3f getPositionXZ(float h, float k, float r, float t, float radiusOffset, boolean isStraight) {
 		if (isStraight) {
-			return new Pos3f(h * t + k * (r + radiusOffset) + 0.5F, 0, k * t + h * (r + radiusOffset) + 0.5F);
+			return new Pos3f(h * t + k * -(r + radiusOffset) + 0.5F, 0, k * t + h * (r + radiusOffset) + 0.5F);
 		} else {
 			return new Pos3f(h + (r + radiusOffset) * (float) Math.cos(t / r) + 0.5F, 0, k + (r + radiusOffset) * (float) Math.sin(t / r) + 0.5F);
 		}

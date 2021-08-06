@@ -32,3 +32,5 @@ bin/
 
 run/
 latest.log
+sources/
+config/
