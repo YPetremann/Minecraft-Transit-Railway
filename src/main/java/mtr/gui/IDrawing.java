@@ -18,6 +18,12 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Matrix3f;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3i;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.render.GameRenderer;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Tessellator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -125,6 +131,147 @@ public interface IDrawing {
 		vertexConsumer.vertex(x1, y2, 0).color(r, g, b, a).next();
 		vertexConsumer.vertex(x2, y2, 0).color(r, g, b, a).next();
 		vertexConsumer.vertex(x2, y1, 0).color(r, g, b, a).next();
+	}
+
+	static void drawRailDebug(MatrixStack matrices, boolean s1, boolean s2, int xS, int zS, int xE, int zE, float xC1, float zC1, float r1, float xC2, float zC2, float r2, float yStart, float yEnd) {				
+		final Matrix4f matrix4f = matrices.peek().getModel();
+
+		/* //1.17
+		RenderSystem.setShader(GameRenderer::getPositionColorShader);
+		/*/ //1.16
+		RenderSystem.shadeModel(7425);
+		RenderSystem.enableAlphaTest();
+		RenderSystem.defaultAlphaFunc();
+		//*/
+
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuffer();
+		RenderSystem.disableTexture();
+		RenderSystem.disableBlend();
+		RenderSystem.lineWidth(1.0F);
+
+		final float yM = (yStart + yEnd) / 2;
+		final float d = 0.5F;
+		final float COS45 = (float) (1 / Math.sqrt(2));
+
+		final float xO1 = (s1 ? xS : 0) + xC1 + d;
+		final float zO1 = (s1 ? zS : 0) + zC1 + d;
+		final float xO2 = (s2 ? xE : 0) + xC2 + d;
+		final float zO2 = (s2 ? zE : 0) + zC2 + d;
+		float cR1 = s1 ? 0.2F : 0.4F;
+		float cG1 = 0.4F;
+		float cB1 = s1 ? 0.4F : 0.2F;
+		float cR2 = s2 ? 0.2F : 0.4F;
+		float cG2 = 0.4F;
+		float cB2 = s2 ? 0.4F : 0.2F;
+		RenderSystem.disableDepthTest();
+
+		/* //1.17
+		bufferBuilder.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+		/*/ //1.16
+		bufferBuilder.begin(3, VertexFormats.POSITION_COLOR);
+		//*/
+		bufferBuilder.vertex(matrix4f, xS+d        , yM+0.1F, zS+d        ).color(cR1, cG1, cB1, 0F).next();
+		bufferBuilder.vertex(matrix4f, xO1         , yM+0.1F, zO1         ).color(cR1, cG1, cB1, 1F).next();
+		bufferBuilder.vertex(matrix4f, xO1         , yM+0.2F, zO1         ).color(cR1, cG1, cB1, 1F).next();
+		if (s1) {
+			bufferBuilder.vertex(matrix4f, xO1+zC1*r1  , yM+0.2F, zO1-xC1*r1  ).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1+zC1*r1  , yM+0.1F, zO1-xC1*r1  ).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1+zC1*r1  , yM+0.1F, zO1-xC1*r1  ).color(cR1, cG1, cB1, 0F).next();
+		} else {
+			bufferBuilder.vertex(matrix4f, xO1 + r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1 * COS45, yM + 0.2F, zO1 + r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1, yM + 0.2F, zO1 + r1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 - r1 * COS45, yM + 0.2F, zO1 + r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 - r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 - r1 * COS45, yM + 0.2F, zO1 - r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1, yM + 0.2F, zO1 - r1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1 * COS45, yM + 0.2F, zO1 - r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 0F).next();
+		}
+		
+		bufferBuilder.vertex(matrix4f, xE+d        , yM-0.1F, zE+d      ).color(cR2, cG2, cB2, 0F).next();
+		bufferBuilder.vertex(matrix4f, xO2         , yM-0.1F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+		bufferBuilder.vertex(matrix4f, xO2         , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+		if (s2) {
+			bufferBuilder.vertex(matrix4f, xO2+zC2*r2  , yM-0.2F, zO2-xC2*r2  ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+zC2*r2  , yM-0.1F, zO2-xC2*r2  ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+zC2*r2  , yM-0.1F, zO2-xC2*r2  ).color(cR2, cG2, cB2, 0F).next();
+		} else {
+			bufferBuilder.vertex(matrix4f, xO2+r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2*COS45, yM-0.2F, zO2+r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2         , yM-0.2F, zO2+r2      ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2-r2*COS45, yM-0.2F, zO2+r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2-r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2-r2*COS45, yM-0.2F, zO2-r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2         , yM-0.2F, zO2-r2      ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2*COS45, yM-0.2F, zO2-r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 0F).next();
+		}
+		tessellator.draw();
+		cR1 = s1 ? 0.5F : 1;
+		cG1 = 1;
+		cB1 = s1 ? 1 : 0.5F;
+		cR2 = s2 ? 0.5F : 1;
+		cG2 = 1;
+		cB2 = s2 ? 1 : 0.5F;
+
+		RenderSystem.enableDepthTest();
+
+		/* //1.17
+		bufferBuilder.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+		/*/ //1.16
+		bufferBuilder.begin(3, VertexFormats.POSITION_COLOR);
+		//*/
+		bufferBuilder.vertex(matrix4f, xS+d        , yM+0.1F, zS+d        ).color(1F, 0.5F, 0.5F, 0F).next();
+		bufferBuilder.vertex(matrix4f, xS+d        , yM+0.1F, zS+d        ).color(1F, 0.5F, 0.5F, 0F).next();
+
+		bufferBuilder.vertex(matrix4f, xS+d        , yM+0.1F, zS+d        ).color(cR1, cG1, cB1, 0F).next();
+		bufferBuilder.vertex(matrix4f, xO1         , yM+0.1F, zO1         ).color(cR1, cG1, cB1, 1F).next();
+		bufferBuilder.vertex(matrix4f, xO1         , yM+0.2F, zO1         ).color(cR1, cG1, cB1, 1F).next();
+		if (s1) {
+			bufferBuilder.vertex(matrix4f, xO1+zC1*r1  , yM+0.2F, zO1-xC1*r1  ).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1+zC1*r1  , yM+0.1F, zO1-xC1*r1  ).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1+zC1*r1  , yM+0.1F, zO1-xC1*r1  ).color(cR1, cG1, cB1, 0F).next();
+		} else {
+			bufferBuilder.vertex(matrix4f, xO1 + r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1 * COS45, yM + 0.2F, zO1 + r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1, yM + 0.2F, zO1 + r1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 - r1 * COS45, yM + 0.2F, zO1 + r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 - r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 - r1 * COS45, yM + 0.2F, zO1 - r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1, yM + 0.2F, zO1 - r1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1 * COS45, yM + 0.2F, zO1 - r1 * COS45).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO1 + r1, yM + 0.2F, zO1).color(cR1, cG1, cB1, 0F).next();
+		}
+		
+		bufferBuilder.vertex(matrix4f, xE+d        , yM-0.1F, zE+d      ).color(cR2, cG2, cB2, 0F).next();
+		bufferBuilder.vertex(matrix4f, xO2         , yM-0.1F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+		bufferBuilder.vertex(matrix4f, xO2         , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+		if (s2) {
+			bufferBuilder.vertex(matrix4f, xO2+zC2*r2  , yM-0.2F, zO2-xC2*r2  ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+zC2*r2  , yM-0.1F, zO2-xC2*r2  ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+zC2*r2  , yM-0.1F, zO2-xC2*r2  ).color(cR2, cG2, cB2, 0F).next();
+		} else {
+			bufferBuilder.vertex(matrix4f, xO2+r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2*COS45, yM-0.2F, zO2+r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2         , yM-0.2F, zO2+r2      ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2-r2*COS45, yM-0.2F, zO2+r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2-r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2-r2*COS45, yM-0.2F, zO2-r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2         , yM-0.2F, zO2-r2      ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2*COS45, yM-0.2F, zO2-r2*COS45).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 1F).next();
+			bufferBuilder.vertex(matrix4f, xO2+r2      , yM-0.2F, zO2         ).color(cR2, cG2, cB2, 0F).next();
+		}
+		tessellator.draw();
+
+		RenderSystem.lineWidth(1.0F);
+		RenderSystem.enableBlend();
+		RenderSystem.enableTexture();
 	}
 
 	static void drawTexture(MatrixStack matrices, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, Direction facing, int color, int light) {

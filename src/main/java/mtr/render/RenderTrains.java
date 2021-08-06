@@ -19,6 +19,7 @@ import net.minecraft.client.render.entity.model.MinecartEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.MinecartEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
@@ -246,6 +247,24 @@ public class RenderTrains implements IGui {
 				return;
 			}
 
+			if (isDebug) {
+				final NbtCompound rail_dbg = rail.toCompoundTag();
+				final boolean s1 = rail_dbg.getBoolean("is_straight_1");
+				final boolean s2 = rail_dbg.getBoolean("is_straight_2");
+				final int xS = startPos.getX();
+				final int zS = startPos.getZ();
+				final int xE = endPos.getX();
+				final int zE = endPos.getZ();
+				final float xC1 = rail_dbg.getFloat("h_1");
+				final float zC1 = rail_dbg.getFloat("k_1");
+				final float r1 = rail_dbg.getFloat("r_1");
+				final float xC2 = rail_dbg.getFloat("h_2");
+				final float zC2 = rail_dbg.getFloat("k_2");
+				final float r2 = rail_dbg.getFloat("r_2");
+				final float yStart = rail_dbg.getFloat("y_start");
+				final float yEnd = rail_dbg.getFloat("y_start");
+				IDrawing.drawRailDebug(matrices, s1,s2,xS,zS,xE, zE, xC1, zC1, r1, xC2, zC2,r2,yStart,yEnd);
+			}
 			rail.render((x1, z1, x2, z2, x3, z3, x4, z4, y1, y2) -> {
 				if (shouldNotRender(player, new BlockPos(x1, y1, z1), maxRailDistance)) {
 					return;
