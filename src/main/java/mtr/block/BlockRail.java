@@ -26,16 +26,30 @@ import java.util.*;
 public class BlockRail extends HorizontalFacingBlock implements BlockEntityProvider {
 
 	public static final BooleanProperty FACING = BooleanProperty.of("facing");
+	public static final BooleanProperty DIAGONAL = BooleanProperty.of("diagonal");
 	public static final BooleanProperty IS_CONNECTED = BooleanProperty.of("is_connected");
 
 	public BlockRail(Settings settings) {
 		super(settings);
+		setDefaultState(getStateManager().getDefaultState()
+				.with(FACING, false)
+				.with(IS_CONNECTED, false)
+				.with(DIAGONAL, false)
+		);
+	}
+
+	private float getAngle(float angle) {
+		final float new_angle = angle % 90;
+		return new_angle < 0 ? new_angle + 90 : new_angle;
 	}
 
 	@Override
 	public BlockState getPlacementState(ItemPlacementContext ctx) {
+		final float angle = getAngle(ctx.getPlayerYaw());
+		final boolean diagonal = angle > 22.5 && angle < 67.5;
 		final boolean facing = ctx.getPlayerFacing().getAxis() == Direction.Axis.X;
-		return getDefaultState().with(FACING, facing).with(IS_CONNECTED, false);
+		final boolean facing_correction = diagonal && angle >= 45;
+		return getDefaultState().with(FACING, facing ^ facing_correction).with(IS_CONNECTED, false).with(DIAGONAL, diagonal);
 	}
 
 	@Override
@@ -66,7 +80,7 @@ public class BlockRail extends HorizontalFacingBlock implements BlockEntityProvi
 
 	@Override
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(FACING, IS_CONNECTED);
+		builder.add(FACING, IS_CONNECTED, DIAGONAL);
 	}
 
 	@Override

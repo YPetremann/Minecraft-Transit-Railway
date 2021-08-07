@@ -1,17 +1,31 @@
 {
 	"variants": {
-		"facing=false,is_connected=false": {
+		"facing=false,diagonal=false,is_connected=false": {
 			"model": "mtr:block/rail_buffer"
 		},
-		"facing=true,is_connected=false": {
+		"facing=false,diagonal=true,is_connected=false": {
+			"model": "mtr:block/rail_buffer_diagonal"
+		},
+		"facing=true,diagonal=false,is_connected=false": {
 			"model": "mtr:block/rail_buffer",
 			"y": 90
 		},
-		"facing=false,is_connected=true": {
+		"facing=true,diagonal=true,is_connected=false": {
+			"model": "mtr:block/rail_buffer_diagonal",
+			"y": 90
+		},
+		"facing=false,diagonal=false,is_connected=true": {
 			"model": "mtr:block/rail_connection"
 		},
-		"facing=true,is_connected=true": {
+		"facing=false,diagonal=true,is_connected=true": {
+			"model": "mtr:block/rail_connection_diagonal"
+		},
+		"facing=true,diagonal=false,is_connected=true": {
 			"model": "mtr:block/rail_connection",
+			"y": 90
+		},
+		"facing=true,diagonal=true,is_connected=true": {
+			"model": "mtr:block/rail_connection_diagonal",
 			"y": 90
 		}
 	}
